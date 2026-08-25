@@ -1,3 +1,8 @@
+#[cfg(test)]
+mod tests;
+
+const TICK_SECONDS: f32 = 0.1;
+
 struct Car {
     position_m: f32,
     current_speed_ms: f32, //meters/second
@@ -46,17 +51,20 @@ fn cruise_control_variation(behind: &Car, opt_ahead: Option<&Car>) -> f32 {
             let rel_target_pos = target_cruise_control_position-behind.position_m;
             let distance_between_cars_m = ahead.position_m - behind.position_m;
 
-            if ahead.position_m > target_cruise_control_position+1.0 {
+            if ahead.position_m > target_cruise_control_position {
                 let radar_available_ahead_m = 200.0-rel_target_pos;
-                let perc_ahead = distance_between_cars_m/(radar_available_ahead_m+1.0);
+                let perc_ahead = distance_between_cars_m/(radar_available_ahead_m);
+
+                println!("ahead {}", perc_ahead);
 
                 let acceleration = behind.acceleration_mssq * perc_ahead;
-                return acceleration.clamp(0.0, behind.acceleration_mssq);
+                return acceleration.clamp(0.0, behind.acceleration_mssq)*TICK_SECONDS;
 
-            } else if ahead.position_m < target_cruise_control_position-1.0 {
+            } else if ahead.position_m < target_cruise_control_position {
                 let perc_behind = (distance_between_cars_m-behind.min_gap_m)/(rel_target_pos-behind.min_gap_m);
+                println!("behind {}", perc_behind);
                 let braking = behind.braking_mssq*perc_behind;
-                return braking.clamp(behind.braking_mssq, 0.0);
+                return braking.clamp(behind.braking_mssq, 0.0)*TICK_SECONDS;
 
             } else {
                 return 0.0
@@ -72,7 +80,7 @@ fn tick(v: &Vec<Car>) -> Vec<Car> {
     for (i, x) in v.iter().enumerate() {
         let new_speed = x.current_speed_ms + cruise_control_variation(x, v.get(i+1));
         let car = Car {
-            position_m: x.position_m + new_speed.clamp(0.0, x.cruise_speed_ms),
+            position_m: x.position_m + (new_speed.clamp(0.0, x.cruise_speed_ms)*TICK_SECONDS),
             current_speed_ms: new_speed.clamp(0.0, x.cruise_speed_ms),
             cruise_speed_ms: x.cruise_speed_ms,
             min_gap_m: x.min_gap_m,
