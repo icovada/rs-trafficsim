@@ -179,3 +179,47 @@ fn test_calc_acceleration_percentage() {
 
     assert_eq!(car1.calc_acceleration_percentage(opt_some), 0.5);
 }
+
+#[test]
+fn test_new_acceleration_delta() {
+    /*
+
+    |----|-----|----x--------|
+    |    |     |    |        ^-- end of radar : 200
+    |    |     |    ^----------- car ahead    : 145.0
+    |    |     ^---------------- target point : 90.0
+    |    ^---------------------- self.min_gap : 30.0
+    ^--------------------------- 0.0
+
+    I need to find how far ahead x is between target point e 200.0.
+
+
+    */
+
+    let car1 = Car {
+        position_m: 0.0,
+        current_speed_ms: 30.0,
+        cruise_speed_ms: 30.0,
+        min_gap_m: 30.0,
+        time_headway_sec: 3.0,
+        acceleration_mssq: 5.0,
+        braking_mssq: 10.0,
+    };
+
+    let mut car2 = Car {
+        position_m: 145.0,
+        current_speed_ms: 30.0,
+        cruise_speed_ms: 30.0,
+        min_gap_m: 3.0,
+        time_headway_sec: 3.0,
+        acceleration_mssq: 5.0,
+        braking_mssq: 10.0,
+    };
+
+    let opt_some: Option<&Car> = Some(&mut car2);
+    assert_eq!(car1.new_acceleration_delta(opt_some), 2.5);
+
+    car2.position_m = 60.0;
+    let opt_some: Option<&Car> = Some(&mut car2);
+    assert_eq!(car1.new_acceleration_delta(opt_some), -5.0);
+}
