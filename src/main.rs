@@ -13,25 +13,57 @@ pub struct Car {
     braking_mssq: f32,      // meters/second^2
 }
 
+#[derive(PartialEq, Eq, Debug)]
+pub enum CruiseControlPositionEnum {
+    VisibleAheadTarget,
+    VisibleBehindTarget,
+    VisibleOnTarget,
+    NotVisible
+}
+
 pub trait CruiseControl {
     fn update_position(&mut self, tick_seconds: f32);
 
-    fn is_car_ahead_visible(&self, opt_ahead: Option<&Car>) -> bool;
+    fn get_relative_target(&self) -> f32;
+    fn get_absolute_target(&self) -> f32;
+    
+    fn is_car_ahead_visible(&self, opt_ahead: Option<&Car>) -> CruiseControlPositionEnum;
 }
+
 
 impl CruiseControl for Car {
     fn update_position(&mut self, tick_seconds: f32) {
         self.position_m += self.current_speed_ms*tick_seconds;
     }
 
-    fn is_car_ahead_visible(&self, opt_ahead: Option<&Car>) -> bool {
+    fn get_relative_target(&self) -> f32 {
+        return self.current_speed_ms * self.time_headway_sec;
+    }
+
+    fn get_absolute_target(&self) -> f32 {
+        return self.get_relative_target() + self.position_m;
+    }
+
+    fn is_car_ahead_visible(&self, opt_ahead: Option<&Car>) -> CruiseControlPositionEnum {
         match opt_ahead{
             Some(ahead) => {
-                if ahead.position_m < self.position_m + 200.0 { return true } else { return false }
+                if ahead.position_m > self.position_m + 200.0 { 
+                    return CruiseControlPositionEnum::NotVisible
+                }
+
+                if ahead.position_m > self.get_relative_target() {
+                    return CruiseControlPositionEnum::VisibleAheadTarget
+                } else if ahead.position_m == self.get_relative_target() {
+                    return CruiseControlPositionEnum::VisibleOnTarget
+                } else {
+                    return CruiseControlPositionEnum::VisibleBehindTarget
+                }
             }
-            None => { return false }
+            None => { return CruiseControlPositionEnum::NotVisible }
         }
     }
+
+
 }
 
 fn setup() -> Vec<Car> {
