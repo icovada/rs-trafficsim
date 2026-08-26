@@ -28,6 +28,10 @@ pub trait CruiseControl {
     fn get_absolute_target(&self) -> f32;
     
     fn is_car_ahead_visible(&self, opt_ahead: Option<&Car>) -> CruiseControlPositionEnum;
+
+    fn calc_acceleration_percentage(&self, opt_ahead: Option<&Car>) -> f32;
+    fn calc_braking_percentage(&self, opt_ahead: Option<&Car>) -> f32;
+    fn new_acceleration(&self, opt_ahead: Option<&Car>) -> f32;
 }
 
 
@@ -63,6 +67,58 @@ impl CruiseControl for Car {
         }
     }
 
+    fn calc_acceleration_percentage(&self, opt_ahead: Option<&Car>) -> f32 {
+        match opt_ahead{
+            Some(ahead) => {
+                let start = self.get_relative_target();
+                let end = 200.0;
+                let length = end-start;
+
+                println!("{} {} {}", start, end, length);
+                
+                (ahead.position_m - start) / length
+            }
+            None => { 1.0 }
+        }
+    }
+
+    fn calc_braking_percentage(&self, opt_ahead: Option<&Car>) -> f32 {
+
+        /*
+        
+        |----|-----x----|--------|
+        |    |     |    |        ^-- end of radar
+        |    |     |    ^----------- target point
+        |    |     ^---------------- car ahead
+        |    ^---------------------- self.min_gap
+        ^--------------------------- 0.0
+
+        I need to find how far ahead x is between self.min_gap and target point.
+        Subtract self.min_gap from everything
+        
+        */
+        
+        match opt_ahead{
+            Some(ahead) => {                
+                (ahead.position_m - self.position_m - self.min_gap_m) / (self.get_relative_target() - self.min_gap_m) *-1.0
+            }
+            None => { 0.0 }
+        }
+    }
+
+    fn new_acceleration(&self, opt_ahead: Option<&Car>) -> f32 {
+        match self.is_car_ahead_visible(opt_ahead) {
+            CruiseControlPositionEnum::NotVisible => { 100.0 }
+            CruiseControlPositionEnum::VisibleOnTarget => { 0.0 }
+            CruiseControlPositionEnum::VisibleAheadTarget => { 
+                self.calc_acceleration_percentage(opt_ahead)*self.acceleration_mssq
+            }
+            CruiseControlPositionEnum::VisibleBehindTarget => {
+                self.calc_braking_percentage(opt_ahead)*self.braking_mssq
+            }
+        }
+    }
+
 
 }
 
@@ -74,7 +130,7 @@ fn setup() -> Vec<Car> {
         min_gap_m: 10.0,
         time_headway_sec: 3.0,
         acceleration_mssq: 3.0,
-        braking_mssq: -5.0,
+        braking_mssq: 5.0,
     };
 
     let car2 = Car {
@@ -84,7 +140,7 @@ fn setup() -> Vec<Car> {
         min_gap_m: 10.0,
         time_headway_sec: 3.0,
         acceleration_mssq: 3.0,
-        braking_mssq: -5.0,
+        braking_mssq: 5.0,
     };
 
     let v = vec![car1, car2];

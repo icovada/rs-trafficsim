@@ -71,7 +71,98 @@ fn test_is_car_ahead_visible() {
     car2.position_m = 30.0;
     let opt_some: Option<&Car> = Some(&mut car2);
     assert_eq!(car1.is_car_ahead_visible(opt_some), CruiseControlPositionEnum::VisibleBehindTarget);
+}
+
+#[test]
+fn test_calc_braking_percentage() {
+    /*
+    
+    |----|-----x----|--------|
+    |    |     |    |        ^-- end of radar : 200
+    |    |     |    ^----------- target point : 90.0
+    |    |     ^---------------- car ahead    : 45.0
+    |    ^---------------------- self.min_gap : 30.0
+    ^--------------------------- 0.0
+
+    I need to find how far ahead x is between self.min_gap and target point.
+    
+    
+    */
+
+    let car1 = Car {
+        position_m: 0.0,
+        current_speed_ms: 30.0,
+        cruise_speed_ms: 30.0,
+        min_gap_m: 30.0,
+        time_headway_sec: 3.0,
+        acceleration_mssq: 5.0,
+        braking_mssq: 10.0,
+    };
+    
+    let mut car2 = Car {
+        position_m: 60.0,
+        current_speed_ms: 30.0,
+        cruise_speed_ms: 30.0,
+        min_gap_m: 3.0,
+        time_headway_sec: 3.0,
+        acceleration_mssq: 5.0,
+        braking_mssq: 10.0,
+    };
+
+    let opt_some: Option<&Car> = Some(&mut car2);
+    assert_eq!(car1.get_absolute_target(), 90.0);
+
+    // min 30.0
+    // max 30.0
+    // halfpoint 60.0 -> brake 50% -> -0.5
+
+    assert_eq!(car1.calc_braking_percentage(opt_some), -0.5);
+}
 
 
+#[test]
+fn test_calc_acceleration_percentage() {
+    /*
+    
+    |----|-----|----x--------|
+    |    |     |    |        ^-- end of radar : 200
+    |    |     |    ^----------- car ahead    : 145.0
+    |    |     ^---------------- target point : 90.0
+    |    ^---------------------- self.min_gap : 30.0
+    ^--------------------------- 0.0
+
+    I need to find how far ahead x is between target point e 200.0.
+    
+    
+    */
+
+    let car1 = Car {
+        position_m: 0.0,
+        current_speed_ms: 30.0,
+        cruise_speed_ms: 30.0,
+        min_gap_m: 30.0,
+        time_headway_sec: 3.0,
+        acceleration_mssq: 5.0,
+        braking_mssq: 10.0,
+    };
+    
+    let mut car2 = Car {
+        position_m: 145.0,
+        current_speed_ms: 30.0,
+        cruise_speed_ms: 30.0,
+        min_gap_m: 3.0,
+        time_headway_sec: 3.0,
+        acceleration_mssq: 5.0,
+        braking_mssq: 10.0,
+    };
+
+    let opt_some: Option<&Car> = Some(&mut car2);
+    assert_eq!(car1.get_absolute_target(), 90.0);
+
+    // min 90.0
+    // max 200.0
+    // halfpoint 145 -> accel 50% -> 0.5
+
+    assert_eq!(car1.calc_acceleration_percentage(opt_some), 0.5);
 }
 
