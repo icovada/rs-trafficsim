@@ -45,7 +45,10 @@ fn test_is_car_ahead_visible() {
     };
 
     let opt_none: Option<&Car> = None;
-    assert_eq!(car1.is_car_ahead_visible(opt_none), CruiseControlPositionEnum::NotVisible);
+    assert_eq!(
+        car1.is_car_ahead_visible(opt_none),
+        CruiseControlPositionEnum::NotVisible
+    );
 
     let mut car2 = Car {
         position_m: 250.0,
@@ -58,25 +61,37 @@ fn test_is_car_ahead_visible() {
     };
 
     let opt_some: Option<&Car> = Some(&mut car2);
-    assert_eq!(car1.is_car_ahead_visible(opt_some), CruiseControlPositionEnum::NotVisible);
+    assert_eq!(
+        car1.is_car_ahead_visible(opt_some),
+        CruiseControlPositionEnum::NotVisible
+    );
 
     car2.position_m = 190.0;
     let opt_some: Option<&Car> = Some(&mut car2);
-    assert_eq!(car1.is_car_ahead_visible(opt_some), CruiseControlPositionEnum::VisibleAheadTarget);
+    assert_eq!(
+        car1.is_car_ahead_visible(opt_some),
+        CruiseControlPositionEnum::VisibleAheadTarget
+    );
 
     car2.position_m = 90.0;
     let opt_some: Option<&Car> = Some(&mut car2);
-    assert_eq!(car1.is_car_ahead_visible(opt_some), CruiseControlPositionEnum::VisibleOnTarget);
+    assert_eq!(
+        car1.is_car_ahead_visible(opt_some),
+        CruiseControlPositionEnum::VisibleOnTarget
+    );
 
     car2.position_m = 30.0;
     let opt_some: Option<&Car> = Some(&mut car2);
-    assert_eq!(car1.is_car_ahead_visible(opt_some), CruiseControlPositionEnum::VisibleBehindTarget);
+    assert_eq!(
+        car1.is_car_ahead_visible(opt_some),
+        CruiseControlPositionEnum::VisibleBehindTarget
+    );
 }
 
 #[test]
 fn test_calc_braking_percentage() {
     /*
-    
+
     |----|-----x----|--------|
     |    |     |    |        ^-- end of radar : 200
     |    |     |    ^----------- target point : 90.0
@@ -85,8 +100,8 @@ fn test_calc_braking_percentage() {
     ^--------------------------- 0.0
 
     I need to find how far ahead x is between self.min_gap and target point.
-    
-    
+
+
     */
 
     let car1 = Car {
@@ -98,7 +113,7 @@ fn test_calc_braking_percentage() {
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
     };
-    
+
     let mut car2 = Car {
         position_m: 60.0,
         current_speed_ms: 30.0,
@@ -119,11 +134,10 @@ fn test_calc_braking_percentage() {
     assert_eq!(car1.calc_braking_percentage(opt_some), -0.5);
 }
 
-
 #[test]
 fn test_calc_acceleration_percentage() {
     /*
-    
+
     |----|-----|----x--------|
     |    |     |    |        ^-- end of radar : 200
     |    |     |    ^----------- car ahead    : 145.0
@@ -132,8 +146,8 @@ fn test_calc_acceleration_percentage() {
     ^--------------------------- 0.0
 
     I need to find how far ahead x is between target point e 200.0.
-    
-    
+
+
     */
 
     let car1 = Car {
@@ -145,7 +159,7 @@ fn test_calc_acceleration_percentage() {
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
     };
-    
+
     let mut car2 = Car {
         position_m: 145.0,
         current_speed_ms: 30.0,
@@ -165,4 +179,3 @@ fn test_calc_acceleration_percentage() {
 
     assert_eq!(car1.calc_acceleration_percentage(opt_some), 0.5);
 }
-
