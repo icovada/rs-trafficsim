@@ -114,7 +114,7 @@ fn test_calc_braking_percentage() {
         braking_mssq: 10.0,
     };
 
-    let mut car2 = Car {
+    let car2 = Car {
         position_m: 60.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -124,14 +124,13 @@ fn test_calc_braking_percentage() {
         braking_mssq: 10.0,
     };
 
-    let opt_some: Option<&Car> = Some(&mut car2);
     assert_eq!(car1.get_absolute_target(), 90.0);
 
     // min 30.0
     // max 30.0
     // halfpoint 60.0 -> brake 50% -> -0.5
 
-    assert_eq!(car1.calc_braking_percentage(opt_some), -0.5);
+    assert_eq!(car1.calc_braking_percentage(&car2), -0.5);
 }
 
 #[test]
@@ -160,7 +159,7 @@ fn test_calc_acceleration_percentage() {
         braking_mssq: 10.0,
     };
 
-    let mut car2 = Car {
+    let car2 = Car {
         position_m: 145.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -170,14 +169,13 @@ fn test_calc_acceleration_percentage() {
         braking_mssq: 10.0,
     };
 
-    let opt_some: Option<&Car> = Some(&mut car2);
     assert_eq!(car1.get_absolute_target(), 90.0);
 
     // min 90.0
     // max 200.0
     // halfpoint 145 -> accel 50% -> 0.5
 
-    assert_eq!(car1.calc_acceleration_percentage(opt_some), 0.5);
+    assert_eq!(car1.calc_acceleration_percentage(&car2), 0.5);
 }
 
 #[test]

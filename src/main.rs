@@ -29,8 +29,8 @@ pub trait CruiseControl {
 
     fn is_car_ahead_visible(&self, opt_ahead: Option<&Car>) -> CruiseControlPositionEnum;
 
-    fn calc_acceleration_percentage(&self, opt_ahead: Option<&Car>) -> f32;
-    fn calc_braking_percentage(&self, opt_ahead: Option<&Car>) -> f32;
+    fn calc_acceleration_percentage(&self, ahead: &Car) -> f32;
+    fn calc_braking_percentage(&self, ahead: &Car) -> f32;
     fn new_acceleration_delta(&self, opt_ahead: Option<&Car>) -> f32;
 }
 
@@ -66,22 +66,17 @@ impl CruiseControl for Car {
         }
     }
 
-    fn calc_acceleration_percentage(&self, opt_ahead: Option<&Car>) -> f32 {
-        match opt_ahead {
-            Some(ahead) => {
-                let start = self.get_relative_target();
-                let end = 200.0;
-                let length = end - start;
+    fn calc_acceleration_percentage(&self, ahead: &Car) -> f32 {
+        let start = self.get_relative_target();
+        let end = 200.0;
+        let length = end - start;
 
-                println!("{} {} {}", start, end, length);
+        println!("{} {} {}", start, end, length);
 
-                (ahead.position_m - start) / length
-            }
-            None => 1.0,
-        }
+        (ahead.position_m - start) / length
     }
 
-    fn calc_braking_percentage(&self, opt_ahead: Option<&Car>) -> f32 {
+    fn calc_braking_percentage(&self, ahead: &Car) -> f32 {
         /*
 
         |----|-----x----|--------|
@@ -96,14 +91,9 @@ impl CruiseControl for Car {
 
         */
 
-        match opt_ahead {
-            Some(ahead) => {
-                (ahead.position_m - self.position_m - self.min_gap_m)
-                    / (self.get_relative_target() - self.min_gap_m)
-                    * -1.0
-            }
-            None => 0.0,
-        }
+        (ahead.position_m - self.position_m - self.min_gap_m)
+            / (self.get_relative_target() - self.min_gap_m)
+            * -1.0
     }
 
     fn new_acceleration_delta(&self, opt_ahead: Option<&Car>) -> f32 {
@@ -111,10 +101,10 @@ impl CruiseControl for Car {
             CruiseControlPositionEnum::NotVisible => 100.0,
             CruiseControlPositionEnum::VisibleOnTarget => 0.0,
             CruiseControlPositionEnum::VisibleAheadTarget => {
-                self.calc_acceleration_percentage(opt_ahead) * self.acceleration_mssq
+                self.calc_acceleration_percentage(opt_ahead.unwrap()) * self.acceleration_mssq
             }
             CruiseControlPositionEnum::VisibleBehindTarget => {
-                self.calc_braking_percentage(opt_ahead) * self.braking_mssq
+                self.calc_braking_percentage(opt_ahead.unwrap()) * self.braking_mssq
             }
         }
     }
