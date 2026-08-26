@@ -3,7 +3,7 @@ mod tests;
 
 const TICK_SECONDS: f32 = 0.1;
 
-struct Car {
+pub struct Car {
     position_m: f32,
     current_speed_ms: f32, //meters/second
     cruise_speed_ms: f32,  //meters/second
@@ -15,11 +15,22 @@ struct Car {
 
 pub trait CruiseControl {
     fn update_position(&mut self, tick_seconds: f32);
+
+    fn is_car_ahead_visible(&self, opt_ahead: Option<&Car>) -> bool;
 }
 
 impl CruiseControl for Car {
     fn update_position(&mut self, tick_seconds: f32) {
         self.position_m += self.current_speed_ms*tick_seconds;
+    }
+
+    fn is_car_ahead_visible(&self, opt_ahead: Option<&Car>) -> bool {
+        match opt_ahead{
+            Some(ahead) => {
+                if ahead.position_m < self.position_m + 200.0 { return true } else { return false }
+            }
+            None => { return false }
+        }
     }
 }
 
