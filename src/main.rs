@@ -22,7 +22,8 @@ pub enum CruiseControlPositionEnum {
 }
 
 pub trait CruiseControl {
-    fn update_position(&mut self, tick_seconds: f32);
+    // fn tick(&mut self, opt_ahead: Option<&Car>);
+    fn update_position(&mut self);
 
     fn get_relative_target(&self) -> f32;
     fn get_absolute_target(&self) -> f32;
@@ -35,8 +36,8 @@ pub trait CruiseControl {
 }
 
 impl CruiseControl for Car {
-    fn update_position(&mut self, tick_seconds: f32) {
-        self.position_m += self.current_speed_ms * tick_seconds;
+    fn update_position(&mut self) {
+        self.position_m += self.current_speed_ms * TICK_SECONDS;
     }
 
     fn get_relative_target(&self) -> f32 {

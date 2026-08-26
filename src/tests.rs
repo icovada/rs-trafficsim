@@ -12,7 +12,7 @@ fn test_update_position() {
         braking_mssq: 10.0,
     };
 
-    car1.update_position(TICK_SECONDS);
+    car1.update_position();
 
     assert_eq!(car1.position_m, 3.0)
 }
