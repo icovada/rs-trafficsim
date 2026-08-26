@@ -13,6 +13,16 @@ struct Car {
     braking_mssq: f32,      // meters/second^2
 }
 
+pub trait CruiseControl {
+    fn update_position(&mut self, tick_seconds: f32);
+}
+
+impl CruiseControl for Car {
+    fn update_position(&mut self, tick_seconds: f32) {
+        self.position_m += self.current_speed_ms*tick_seconds;
+    }
+}
+
 fn setup() -> Vec<Car> {
     let car1 = Car {
         position_m: 0.0,
