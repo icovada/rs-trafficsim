@@ -65,9 +65,9 @@ impl CruiseControl for Car {
                     return CruiseControlPositionEnum::NotVisible;
                 }
 
-                if ahead.position_m > self.get_relative_target() {
+                if ahead.position_m > self.get_absolute_target() {
                     return CruiseControlPositionEnum::VisibleAheadTarget;
-                } else if ahead.position_m == self.get_relative_target() {
+                } else if ahead.position_m == self.get_absolute_target() {
                     return CruiseControlPositionEnum::VisibleOnTarget;
                 } else {
                     return CruiseControlPositionEnum::VisibleBehindTarget;
@@ -78,8 +78,8 @@ impl CruiseControl for Car {
     }
 
     fn calc_acceleration_percentage(&self, ahead: &Car) -> f32 {
-        let start = self.get_relative_target();
-        let end = 200.0;
+        let start = self.get_absolute_target();
+        let end = self.position_m + 200.0;
         let length = end - start;
 
         (ahead.position_m - start) / length
