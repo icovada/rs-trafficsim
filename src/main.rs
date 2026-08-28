@@ -23,7 +23,7 @@ pub enum CruiseControlPositionEnum {
 }
 
 pub trait CruiseControl {
-    fn tick(&mut self, opt_ahead: Option<&Car>) -> Car;
+    fn tick(&self, opt_ahead: Option<&Car>) -> Car;
     fn update_position(&mut self);
 
     fn get_relative_target(&self) -> f32;
@@ -37,7 +37,7 @@ pub trait CruiseControl {
 }
 
 impl CruiseControl for Car {
-    fn tick(&mut self, opt_ahead: Option<&Car>) -> Car{
+    fn tick(&self, opt_ahead: Option<&Car>) -> Car{
         let accel_delta: f32 = self.new_acceleration_delta(opt_ahead) * TICK_SECONDS;
         
         let mut out = self.clone();
@@ -131,7 +131,7 @@ fn setup() -> Vec<Car> {
     };
 
     let car2 = Car {
-        position_m: 100.0,
+        position_m: 150.0,
         current_speed_ms: 12.0,
         cruise_speed_ms: 12.0,
         min_gap_m: 10.0,
@@ -148,9 +148,19 @@ fn setup() -> Vec<Car> {
 fn main() {
     let mut v = setup();
 
-    let mut maxtick = 250;
+    let mut maxtick = 100;
     while maxtick > 0 {
         maxtick -= 1;
 
+        let mut z: Vec<Car> = Vec::new();
+
+        for (i, x) in v.iter().enumerate() {
+            let newcar = x.tick(v.get(i+1));
+            z.push(newcar);
+        }
+
+        println!("{}: {}: {}, {}", z[0].position_m, z[1].position_m, z[0].current_speed_ms, z[1].current_speed_ms);
+
+        v = z;
     }
 }

@@ -224,7 +224,7 @@ fn test_new_acceleration_delta() {
 
 #[test]
 fn test_car_tick(){
-    let mut car1 = Car {
+    let car1 = Car {
         position_m: 0.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
