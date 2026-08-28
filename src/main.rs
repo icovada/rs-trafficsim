@@ -3,6 +3,7 @@ mod tests;
 
 const TICK_SECONDS: f32 = 0.1;
 
+#[derive(Clone, Copy)]
 pub struct Car {
     position_m: f32,
     current_speed_ms: f32, //meters/second
@@ -22,7 +23,7 @@ pub enum CruiseControlPositionEnum {
 }
 
 pub trait CruiseControl {
-    // fn tick(&mut self, opt_ahead: Option<&Car>);
+    fn tick(&mut self, opt_ahead: Option<&Car>) -> Car;
     fn update_position(&mut self);
 
     fn get_relative_target(&self) -> f32;
@@ -36,6 +37,15 @@ pub trait CruiseControl {
 }
 
 impl CruiseControl for Car {
+    fn tick(&mut self, opt_ahead: Option<&Car>) -> Car{
+        let accel_delta: f32 = self.new_acceleration_delta(opt_ahead) * TICK_SECONDS;
+        
+        let mut out = self.clone();
+        out.current_speed_ms = (out.current_speed_ms + accel_delta).clamp(0.0, out.cruise_speed_ms);
+        out.update_position();
+        out
+    }
+
     fn update_position(&mut self) {
         self.position_m += self.current_speed_ms * TICK_SECONDS;
     }
@@ -71,8 +81,6 @@ impl CruiseControl for Car {
         let start = self.get_relative_target();
         let end = 200.0;
         let length = end - start;
-
-        println!("{} {} {}", start, end, length);
 
         (ahead.position_m - start) / length
     }
@@ -137,68 +145,6 @@ fn setup() -> Vec<Car> {
     v
 }
 
-fn cruise_control_variation(behind: &Car, opt_ahead: Option<&Car>) -> f32 {
-    match opt_ahead {
-        Some(ahead) => {
-            // Find whether the car ahead is inside the radar zone
-            if ahead.position_m > behind.position_m + 200.0 {
-                return 0.0;
-            }
-
-            let target_cruise_control_position =
-                behind.position_m + behind.current_speed_ms * behind.time_headway_sec;
-            let rel_target_pos = target_cruise_control_position - behind.position_m;
-            let distance_between_cars_m = ahead.position_m - behind.position_m;
-
-            if ahead.position_m > target_cruise_control_position {
-                let radar_available_ahead_m = 200.0 - rel_target_pos;
-                let perc_ahead = distance_between_cars_m / (radar_available_ahead_m);
-
-                println!("ahead {}", perc_ahead);
-
-                let acceleration = behind.acceleration_mssq * perc_ahead;
-                return acceleration.clamp(0.0, behind.acceleration_mssq) * TICK_SECONDS;
-            } else if ahead.position_m < target_cruise_control_position {
-                let perc_behind = (distance_between_cars_m - behind.min_gap_m)
-                    / (rel_target_pos - behind.min_gap_m);
-                println!("behind {}", perc_behind);
-                let braking = behind.braking_mssq * perc_behind;
-                return braking.clamp(behind.braking_mssq, 0.0) * TICK_SECONDS;
-            } else {
-                return 0.0;
-            }
-        }
-        None => return 0.0,
-    }
-}
-
-fn tick(v: &Vec<Car>) -> Vec<Car> {
-    let mut z: Vec<Car> = Vec::new();
-
-    for (i, x) in v.iter().enumerate() {
-        let new_speed = x.current_speed_ms + cruise_control_variation(x, v.get(i + 1));
-        let car = Car {
-            position_m: x.position_m + (new_speed.clamp(0.0, x.cruise_speed_ms) * TICK_SECONDS),
-            current_speed_ms: new_speed.clamp(0.0, x.cruise_speed_ms),
-            cruise_speed_ms: x.cruise_speed_ms,
-            min_gap_m: x.min_gap_m,
-            time_headway_sec: x.time_headway_sec,
-            acceleration_mssq: x.acceleration_mssq,
-            braking_mssq: x.braking_mssq,
-        };
-
-        z.push(car);
-    }
-
-    println!(
-        "{}: {}, {}",
-        z[1].position_m - z[0].position_m,
-        z[0].current_speed_ms,
-        z[1].current_speed_ms
-    );
-    z
-}
-
 fn main() {
     let mut v = setup();
 
@@ -206,8 +152,5 @@ fn main() {
     while maxtick > 0 {
         maxtick -= 1;
 
-        let mut z = tick(&v);
-        v = Vec::new();
-        v.append(&mut z);
     }
 }
