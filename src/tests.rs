@@ -288,8 +288,16 @@ fn test_read_radar() {
         car1.read_radar(opt_car);
     }
 
+    car2.position_m = 300.0;
+    car1.read_radar(Some(&car2));
+
+    let some100: Option<f32> = Some(100.0);
+    let some60: Option<f32> = Some(60.0);
+
     assert_eq!(
         car1.radar_readings,
-        VecDeque::from([100.0, 100.0, 100.0, 100.0, 100.0, 60.0, 60.0, 60.0, 60.0, 60.0])
+        VecDeque::from([
+            None, some100, some100, some100, some100, some100, some60, some60, some60, some60,
+        ])
     )
 }

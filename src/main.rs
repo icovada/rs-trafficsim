@@ -14,7 +14,7 @@ pub struct Car {
     time_headway_sec: f32,
     acceleration_mssq: f32, // meters/second^2
     braking_mssq: f32,      // meters/second^2
-    radar_readings: VecDeque<f32>,
+    radar_readings: VecDeque<Option<f32>>,
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -150,10 +150,16 @@ impl CruiseControl for Car {
 
     fn read_radar(&mut self, opt_ahead: Option<&Car>) {
         let reading = match opt_ahead {
-            Some(ahead) => ahead.position_m - self.position_m,
-            None => 200.0,
+            Some(ahead) => {
+                let ahead_rel_pos = ahead.position_m - self.position_m;
+                if ahead_rel_pos > 200.0 {
+                    None
+                } else {
+                    Some(ahead_rel_pos)
+                }
+            }
+            None => None,
         };
-
         self.radar_readings.push_front(reading);
         if self.radar_readings.len() > 10 {
             self.radar_readings.pop_back();
