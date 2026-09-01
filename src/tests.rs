@@ -253,3 +253,43 @@ fn test_car_tick() {
 
     assert_eq!(out.position_m, 2.95)
 }
+
+#[test]
+fn test_read_radar() {
+    let mut car1 = Car::new(CarConfig {
+        position_m: 0.0,
+        current_speed_ms: 30.0,
+        cruise_speed_ms: 30.0,
+        min_gap_m: 30.0,
+        time_headway_sec: 3.0,
+        acceleration_mssq: 5.0,
+        braking_mssq: 10.0,
+    });
+
+    let mut car2 = Car::new(CarConfig {
+        position_m: 60.0,
+        current_speed_ms: 30.0,
+        cruise_speed_ms: 30.0,
+        min_gap_m: 3.0,
+        time_headway_sec: 3.0,
+        acceleration_mssq: 5.0,
+        braking_mssq: 10.0,
+    });
+
+    let opt_car: Option<&Car> = Some(&car2);
+    for _ in 0..20 {
+        car1.read_radar(opt_car);
+    }
+
+    car2.position_m = 100.0;
+    let opt_car: Option<&Car> = Some(&car2);
+
+    for _ in 0..5 {
+        car1.read_radar(opt_car);
+    }
+
+    assert_eq!(
+        car1.radar_readings,
+        VecDeque::from([100.0, 100.0, 100.0, 100.0, 100.0, 60.0, 60.0, 60.0, 60.0, 60.0])
+    )
+}

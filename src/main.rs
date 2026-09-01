@@ -37,6 +37,8 @@ pub trait CruiseControl {
     fn calc_acceleration_percentage(&self, ahead: &Car) -> f32;
     fn calc_braking_percentage(&self, ahead: &Car) -> f32;
     fn new_acceleration_delta(&self, opt_ahead: Option<&Car>) -> f32;
+
+    fn read_radar(&mut self, opt_ahead: Option<&Car>);
 }
 
 pub struct CarConfig {
@@ -59,7 +61,7 @@ impl Car {
             time_headway_sec: config.time_headway_sec,
             acceleration_mssq: config.acceleration_mssq,
             braking_mssq: config.braking_mssq,
-            radar_readings: VecDeque::from([200.0, 200.0, 200.0, 200.0, 200.0, 200.0]),
+            radar_readings: VecDeque::new(),
         }
     }
 }
@@ -143,6 +145,18 @@ impl CruiseControl for Car {
             CruiseControlPositionEnum::VisibleBehindTarget => {
                 self.calc_braking_percentage(opt_ahead.unwrap()) * self.braking_mssq
             }
+        }
+    }
+
+    fn read_radar(&mut self, opt_ahead: Option<&Car>) {
+        let reading = match opt_ahead {
+            Some(ahead) => ahead.position_m - self.position_m,
+            None => 200.0,
+        };
+
+        self.radar_readings.push_front(reading);
+        if self.radar_readings.len() > 10 {
+            self.radar_readings.pop_back();
         }
     }
 }
