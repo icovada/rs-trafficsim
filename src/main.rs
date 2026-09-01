@@ -1,9 +1,11 @@
+use std::collections::VecDeque;
+
 #[cfg(test)]
 mod tests;
 
 const TICK_SECONDS: f32 = 0.1;
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Car {
     position_m: f32,
     current_speed_ms: f32, //meters/second
@@ -12,6 +14,7 @@ pub struct Car {
     time_headway_sec: f32,
     acceleration_mssq: f32, // meters/second^2
     braking_mssq: f32,      // meters/second^2
+    radar_readings: VecDeque<f32>,
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -36,10 +39,35 @@ pub trait CruiseControl {
     fn new_acceleration_delta(&self, opt_ahead: Option<&Car>) -> f32;
 }
 
+pub struct CarConfig {
+    pub position_m: f32,
+    pub current_speed_ms: f32, //meters/second
+    pub cruise_speed_ms: f32,  //meters/second
+    pub min_gap_m: f32,
+    pub time_headway_sec: f32,
+    pub acceleration_mssq: f32, // meters/second^2
+    pub braking_mssq: f32,      // meters/second^2
+}
+
+impl Car {
+    pub fn new(config: CarConfig) -> Self {
+        Car {
+            position_m: config.position_m,
+            current_speed_ms: config.current_speed_ms,
+            cruise_speed_ms: config.cruise_speed_ms,
+            min_gap_m: config.min_gap_m,
+            time_headway_sec: config.time_headway_sec,
+            acceleration_mssq: config.acceleration_mssq,
+            braking_mssq: config.braking_mssq,
+            radar_readings: VecDeque::from([200.0, 200.0, 200.0, 200.0, 200.0, 200.0]),
+        }
+    }
+}
+
 impl CruiseControl for Car {
-    fn tick(&self, opt_ahead: Option<&Car>) -> Car{
+    fn tick(&self, opt_ahead: Option<&Car>) -> Car {
         let accel_delta: f32 = self.new_acceleration_delta(opt_ahead) * TICK_SECONDS;
-        
+
         let mut out = self.clone();
         out.current_speed_ms = (out.current_speed_ms + accel_delta).clamp(0.0, out.cruise_speed_ms);
         out.update_position();
@@ -120,7 +148,7 @@ impl CruiseControl for Car {
 }
 
 fn setup() -> Vec<Car> {
-    let car1 = Car {
+    let car1 = Car::new(CarConfig {
         position_m: 0.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -128,9 +156,9 @@ fn setup() -> Vec<Car> {
         time_headway_sec: 3.0,
         acceleration_mssq: 3.0,
         braking_mssq: 5.0,
-    };
+    });
 
-    let car2 = Car {
+    let car2 = Car::new(CarConfig {
         position_m: 150.0,
         current_speed_ms: 12.0,
         cruise_speed_ms: 12.0,
@@ -138,7 +166,7 @@ fn setup() -> Vec<Car> {
         time_headway_sec: 3.0,
         acceleration_mssq: 3.0,
         braking_mssq: 5.0,
-    };
+    });
 
     let v = vec![car1, car2];
 
@@ -155,11 +183,14 @@ fn main() {
         let mut z: Vec<Car> = Vec::new();
 
         for (i, x) in v.iter().enumerate() {
-            let newcar = x.tick(v.get(i+1));
+            let newcar = x.tick(v.get(i + 1));
             z.push(newcar);
         }
 
-        println!("{}: {}: {}, {}", z[0].position_m, z[1].position_m, z[0].current_speed_ms, z[1].current_speed_ms);
+        println!(
+            "{}: {}: {}, {}",
+            z[0].position_m, z[1].position_m, z[0].current_speed_ms, z[1].current_speed_ms
+        );
 
         v = z;
     }

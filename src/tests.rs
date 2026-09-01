@@ -2,7 +2,7 @@ use crate::*;
 
 #[test]
 fn test_update_position() {
-    let mut car1 = Car {
+    let mut car1 = Car::new(CarConfig {
         position_m: 0.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -10,7 +10,7 @@ fn test_update_position() {
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
-    };
+    });
 
     car1.update_position();
 
@@ -19,7 +19,7 @@ fn test_update_position() {
 
 #[test]
 fn test_get_relative_target() {
-    let car1 = Car {
+    let car1 = Car::new(CarConfig {
         position_m: 0.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -27,14 +27,14 @@ fn test_get_relative_target() {
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
-    };
+    });
 
     assert_eq!(car1.get_relative_target(), 90.0);
 }
 
 #[test]
 fn test_is_car_ahead_visible() {
-    let car1 = Car {
+    let car1 = Car::new(CarConfig {
         position_m: 0.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -42,7 +42,7 @@ fn test_is_car_ahead_visible() {
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
-    };
+    });
 
     let opt_none: Option<&Car> = None;
     assert_eq!(
@@ -50,7 +50,7 @@ fn test_is_car_ahead_visible() {
         CruiseControlPositionEnum::NotVisible
     );
 
-    let mut car2 = Car {
+    let mut car2 = Car::new(CarConfig {
         position_m: 250.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -58,7 +58,7 @@ fn test_is_car_ahead_visible() {
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
-    };
+    });
 
     let opt_some: Option<&Car> = Some(&mut car2);
     assert_eq!(
@@ -104,7 +104,7 @@ fn test_calc_braking_percentage() {
 
     */
 
-    let car1 = Car {
+    let car1 = Car::new(CarConfig {
         position_m: 0.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -112,9 +112,9 @@ fn test_calc_braking_percentage() {
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
-    };
+    });
 
-    let car2 = Car {
+    let car2 = Car::new(CarConfig {
         position_m: 60.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -122,7 +122,7 @@ fn test_calc_braking_percentage() {
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
-    };
+    });
 
     assert_eq!(car1.get_absolute_target(), 90.0);
 
@@ -149,7 +149,7 @@ fn test_calc_acceleration_percentage() {
 
     */
 
-    let car1 = Car {
+    let car1 = Car::new(CarConfig {
         position_m: 0.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -157,9 +157,9 @@ fn test_calc_acceleration_percentage() {
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
-    };
+    });
 
-    let car2 = Car {
+    let car2 = Car::new(CarConfig {
         position_m: 145.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -167,7 +167,7 @@ fn test_calc_acceleration_percentage() {
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
-    };
+    });
 
     assert_eq!(car1.get_absolute_target(), 90.0);
 
@@ -194,7 +194,7 @@ fn test_new_acceleration_delta() {
 
     */
 
-    let car1 = Car {
+    let car1 = Car::new(CarConfig {
         position_m: 0.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -202,9 +202,9 @@ fn test_new_acceleration_delta() {
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
-    };
+    });
 
-    let mut car2 = Car {
+    let mut car2 = Car::new(CarConfig {
         position_m: 145.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -212,7 +212,7 @@ fn test_new_acceleration_delta() {
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
-    };
+    });
 
     let opt_some: Option<&Car> = Some(&mut car2);
     assert_eq!(car1.new_acceleration_delta(opt_some), 2.5);
@@ -223,8 +223,8 @@ fn test_new_acceleration_delta() {
 }
 
 #[test]
-fn test_car_tick(){
-    let car1 = Car {
+fn test_car_tick() {
+    let car1 = Car::new(CarConfig {
         position_m: 0.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -232,9 +232,9 @@ fn test_car_tick(){
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
-    };
+    });
 
-    let car2 = Car {
+    let car2 = Car::new(CarConfig {
         position_m: 60.0,
         current_speed_ms: 30.0,
         cruise_speed_ms: 30.0,
@@ -242,7 +242,7 @@ fn test_car_tick(){
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
         braking_mssq: 10.0,
-    };
+    });
 
     let opt_car: Option<&Car> = Some(&car2);
     let out = car1.tick(opt_car);
