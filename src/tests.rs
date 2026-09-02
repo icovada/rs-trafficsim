@@ -301,3 +301,42 @@ fn test_read_radar() {
         ])
     )
 }
+
+#[test]
+fn test_average_speed_front(){
+    let mut car = Car::new(CarConfig { 
+        position_m: 0.0,
+        current_speed_ms: 30.0,
+        cruise_speed_ms: 30.0,
+        min_gap_m: 30.0,
+        time_headway_sec: 3.0,
+        acceleration_mssq: 5.0,
+        braking_mssq: 10.0,
+    });
+
+    car.radar_readings = VecDeque::from([
+        Some(80.0),
+        Some(82.0),
+        Some(85.0),
+        Some(82.0),
+        None,
+        Some(80.0),
+        Some(82.0),
+        None,
+        None,
+        Some(88.0),
+    ]);
+
+    let out_speeds = car.average_speed_front();
+    assert_eq!(out_speeds, [
+        Some(-20.0),
+        Some(-30.0),
+        Some(30.0),
+        None,
+        None,
+        Some(-20.0),
+        None,
+        None,
+        None,
+    ])
+}
