@@ -31,7 +31,6 @@ pub trait CruiseControl {
     fn new_acceleration_delta(&self) -> f32;
 
     fn read_radar(&mut self, opt_ahead: Option<&Car>);
-    fn average_speed_front(&self) -> Vec<Option<f32>>;
 }
 
 impl Car {
@@ -166,17 +165,5 @@ impl CruiseControl for Car {
             }
             _ => self.radar_readings.clear(),
         }
-    }
-
-    fn average_speed_front(&self) -> Vec<Option<f32>> {
-        let mut speeds: Vec<Option<f32>> = Vec::new();
-        for (i, x) in self.radar_readings.iter().enumerate() {
-            match self.radar_readings.get(i + 1) {
-                Some(prev) => speeds.push(Some((x.distance_m - prev.distance_m) / TICK_SECONDS)),
-                None => {}
-            }
-        }
-
-        speeds
     }
 }
