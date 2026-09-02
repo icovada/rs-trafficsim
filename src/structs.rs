@@ -69,8 +69,12 @@ impl CruiseControl for Car {
         match self.radar_readings.get(0) {
             Some(last_reading) => match last_reading.relative_speed {
                 Some(relative_speed) => {
-                    let out =
-                        relative_speed.clamp(self.braking_mssq * -1.0, self.acceleration_mssq);
+                    let out: f32;
+                    if last_reading.distance_m < self.min_gap_m {
+                        out = self.braking_mssq;
+                    } else {
+                        out = relative_speed.clamp(self.braking_mssq * -1.0, self.acceleration_mssq);
+                    }
                     out
                 }
                 None => 0.0,
