@@ -287,11 +287,11 @@ fn test_read_radar() {
     assert_eq!(car1.radar_readings.len(), 10);
     assert_eq!(
         *car1.radar_readings.get(0).unwrap(),
-        Some(RadarReading {
+        RadarReading {
             distance_m: 41.0,
             relative_speed: Some(-10.0),
             distance_from_target_s: Some(-49.0)
-        })
+        }
     );
 
     // Reset car position, read twice
@@ -305,28 +305,28 @@ fn test_read_radar() {
 
     assert_eq!(
         *car1.radar_readings.get(0).unwrap(),
-        Some(RadarReading {
+        RadarReading {
             distance_m: 50.1,
             relative_speed: Some(0.99998474),
             distance_from_target_s: Some(399.0061)
-        })
+        }
     );
 
-    // Move car2 way off. Expect None as reading
+    // Move car2 way off. Vectory empty
     car2.position_m = 350.0;
     car1.read_radar(Some(&car2));
-    assert_eq!(*car1.radar_readings.get(0).unwrap(), None);
+    assert_eq!(car1.radar_readings.len(), 0);
 
     // Move car2 closer. Expect Some reading with None relative speed (need 2 measurements)
     car2.position_m = 150.0;
     car1.read_radar(Some(&car2));
     assert_eq!(
         *car1.radar_readings.get(0).unwrap(),
-        Some(RadarReading {
+        RadarReading {
             distance_m: 140.0,
             relative_speed: None,
             distance_from_target_s: None
-        })
+        }
     );
 
     // Move car2 close. Expect full reading.
@@ -334,10 +334,10 @@ fn test_read_radar() {
     car1.read_radar(Some(&car2));
     assert_eq!(
         *car1.radar_readings.get(0).unwrap(),
-        Some(RadarReading {
+        RadarReading {
             distance_m: 90.0,
             relative_speed: Some(-500.0),
             distance_from_target_s: Some(0.0)
-        })
+        }
     );
 }
