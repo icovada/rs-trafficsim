@@ -1,8 +1,11 @@
-use std::collections::VecDeque;
 use crate::*;
+use std::collections::VecDeque;
 
+mod service_structs;
 #[cfg(test)]
 mod tests;
+
+pub use service_structs::{CarConfig, CruiseControlPositionEnum};
 
 #[derive(Clone)]
 pub struct Car {
@@ -14,14 +17,6 @@ pub struct Car {
     acceleration_mssq: f32, // meters/second^2
     braking_mssq: f32,      // meters/second^2
     radar_readings: VecDeque<Option<f32>>,
-}
-
-#[derive(PartialEq, Eq, Debug)]
-pub enum CruiseControlPositionEnum {
-    VisibleAheadTarget,
-    VisibleBehindTarget,
-    VisibleOnTarget,
-    NotVisible,
 }
 
 pub trait CruiseControl {
@@ -39,16 +34,6 @@ pub trait CruiseControl {
 
     fn read_radar(&mut self, opt_ahead: Option<&Car>);
     fn average_speed_front(&self) -> Vec<Option<f32>>;
-}
-
-pub struct CarConfig {
-    pub position_m: f32,
-    pub current_speed_ms: f32, //meters/second
-    pub cruise_speed_ms: f32,  //meters/second
-    pub min_gap_m: f32,
-    pub time_headway_sec: f32,
-    pub acceleration_mssq: f32, // meters/second^2
-    pub braking_mssq: f32,      // meters/second^2
 }
 
 impl Car {
@@ -180,10 +165,10 @@ impl CruiseControl for Car {
             match x {
                 Some(x_val) => match self.radar_readings.get(i + 1) {
                     Some(prev) => match prev {
-                        Some(prev_val) => speeds.push(Some((x_val - prev_val)/TICK_SECONDS)),
+                        Some(prev_val) => speeds.push(Some((x_val - prev_val) / TICK_SECONDS)),
                         None => speeds.push(None),
                     },
-                    None => {},
+                    None => {}
                 },
                 None => speeds.push(None),
             }
