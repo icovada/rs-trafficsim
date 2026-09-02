@@ -24,8 +24,6 @@ pub trait CruiseControl {
     fn update_position(&mut self);
 
     fn get_relative_target(&self) -> f32;
-    fn get_absolute_target(&self) -> f32;
-
     fn new_acceleration_delta(&self) -> f32;
 
     fn read_radar(&mut self, opt_ahead: Option<&Car>);
@@ -67,10 +65,6 @@ impl CruiseControl for Car {
         return self.current_speed_ms * self.time_headway_sec;
     }
 
-    fn get_absolute_target(&self) -> f32 {
-        return self.get_relative_target() + self.position_m;
-    }
-
     fn new_acceleration_delta(&self) -> f32 {
         match self.radar_readings.get(0) {
             Some(last_reading) => match last_reading.relative_speed {
@@ -107,7 +101,7 @@ impl CruiseControl for Car {
         // We have position in front, read previous position and figure out approx speed
         match (radar_distance_m, self.radar_readings.get(0).copied()) {
             (Some(distance_m), Some(last_reading)) => {
-                let relative_speed = (distance_m - last_reading.distance_m);
+                let relative_speed = distance_m - last_reading.distance_m;
                 let distance_from_target = distance_m - self.get_relative_target();
                 let distance_from_target_s = distance_from_target / relative_speed * -1.0;
 
