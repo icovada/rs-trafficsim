@@ -5,7 +5,7 @@ mod service_structs;
 #[cfg(test)]
 mod tests;
 
-pub use service_structs::{CarConfig, CruiseControlPositionEnum};
+pub use service_structs::{CarConfig, CruiseControlPositionEnum, RadarReading};
 
 #[derive(Clone)]
 pub struct Car {
@@ -16,7 +16,7 @@ pub struct Car {
     time_headway_sec: f32,
     acceleration_mssq: f32, // meters/second^2
     braking_mssq: f32,      // meters/second^2
-    radar_readings: VecDeque<Option<f32>>,
+    radar_readings: VecDeque<Option<RadarReading>>,
 }
 
 pub trait CruiseControl {
@@ -142,7 +142,7 @@ impl CruiseControl for Car {
     }
 
     fn read_radar(&mut self, opt_ahead: Option<&Car>) {
-        let reading = match opt_ahead {
+        let radar_distance_m = match opt_ahead {
             Some(ahead) => {
                 let ahead_rel_pos = ahead.position_m - self.position_m;
                 if ahead_rel_pos > 200.0 {
@@ -153,9 +153,32 @@ impl CruiseControl for Car {
             }
             None => None,
         };
-        self.radar_readings.push_front(reading);
-        if self.radar_readings.len() > 10 {
+
+        // radar_readings should be capped at 10 entries.
+        // TODO: make "9" a constant
+        if self.radar_readings.len() > 9 {
             self.radar_readings.pop_back();
+        }
+
+        // We have position in front, read previous position and figure out approx speed
+        match (radar_distance_m, self.radar_readings.get(0).copied().flatten()) {
+            (Some(distance_m), Some(last_reading)) => {
+                let relative_speed = (distance_m - last_reading.distance_m) / TICK_SECONDS;
+                let distance_from_target = distance_m - self.get_relative_target();
+                let distance_from_target_s = distance_from_target / relative_speed / TICK_SECONDS * -1.0;
+
+                dbg!(relative_speed, distance_from_target, distance_from_target_s, self.get_relative_target());
+
+                self.radar_readings.push_front(Some(RadarReading {
+                    distance_m,
+                    relative_speed: Some(relative_speed),
+                    distance_from_target_s: Some(distance_from_target_s),
+                }));
+            }
+            (Some(distance_m), None) => {
+                self.radar_readings.push_front(Some(RadarReading { distance_m, relative_speed: None, distance_from_target_s: None }));
+            }
+            _ => self.radar_readings.push_front(None),
         }
     }
 
@@ -165,7 +188,9 @@ impl CruiseControl for Car {
             match x {
                 Some(x_val) => match self.radar_readings.get(i + 1) {
                     Some(prev) => match prev {
-                        Some(prev_val) => speeds.push(Some((x_val - prev_val) / TICK_SECONDS)),
+                        Some(prev_val) => speeds.push(Some(
+                            (x_val.distance_m - prev_val.distance_m) / TICK_SECONDS,
+                        )),
                         None => speeds.push(None),
                     },
                     None => {}

@@ -15,3 +15,10 @@ pub struct CarConfig {
     pub acceleration_mssq: f32, // meters/second^2
     pub braking_mssq: f32,      // meters/second^2
 }
+
+#[derive(Clone, Copy, Debug)]
+pub struct RadarReading {
+    pub distance_m: f32,
+    pub relative_speed: Option<f32>,
+    pub distance_from_target_s: Option<f32>
+}
