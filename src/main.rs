@@ -4,7 +4,6 @@ use structs::{Car, CarConfig, CruiseControl};
 
 const TICK_SECONDS: f32 = 0.1;
 
-
 fn setup() -> Vec<Car> {
     let car1 = Car::new(CarConfig {
         position_m: 0.0,
@@ -47,7 +46,10 @@ fn main() {
 
         println!(
             "{}: {}: {}, {}",
-            z[0].position_m(), z[1].position_m(), z[0].current_speed_ms(), z[1].current_speed_ms()
+            z[0].position_m(),
+            z[1].position_m(),
+            z[0].current_speed_ms(),
+            z[1].current_speed_ms()
         );
 
         v = z;

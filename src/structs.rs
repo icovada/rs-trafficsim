@@ -5,7 +5,7 @@ mod service_structs;
 #[cfg(test)]
 mod tests;
 
-pub use service_structs::{CarConfig, CruiseControlPositionEnum, RadarReading};
+pub use service_structs::{CarConfig, RadarReading};
 
 #[derive(Clone)]
 pub struct Car {
@@ -25,8 +25,6 @@ pub trait CruiseControl {
 
     fn get_relative_target(&self) -> f32;
     fn get_absolute_target(&self) -> f32;
-
-    fn is_car_ahead_visible(&self, opt_ahead: Option<&Car>) -> CruiseControlPositionEnum;
 
     fn calc_acceleration_percentage(&self, ahead: &Car) -> f32;
     fn calc_braking_percentage(&self, ahead: &Car) -> f32;
@@ -68,7 +66,8 @@ impl CruiseControl for Car {
     }
 
     fn update_position(&mut self) {
-        self.position_m += self.current_speed_ms * TICK_SECONDS;
+        let speed_delta = self.new_acceleration_delta();
+        self.position_m += self.current_speed_ms + speed_delta * TICK_SECONDS;
     }
 
     fn get_relative_target(&self) -> f32 {
@@ -77,25 +76,6 @@ impl CruiseControl for Car {
 
     fn get_absolute_target(&self) -> f32 {
         return self.get_relative_target() + self.position_m;
-    }
-
-    fn is_car_ahead_visible(&self, opt_ahead: Option<&Car>) -> CruiseControlPositionEnum {
-        match opt_ahead {
-            Some(ahead) => {
-                if ahead.position_m > self.position_m + 200.0 {
-                    return CruiseControlPositionEnum::NotVisible;
-                }
-
-                if ahead.position_m > self.get_absolute_target() {
-                    return CruiseControlPositionEnum::VisibleAheadTarget;
-                } else if ahead.position_m == self.get_absolute_target() {
-                    return CruiseControlPositionEnum::VisibleOnTarget;
-                } else {
-                    return CruiseControlPositionEnum::VisibleBehindTarget;
-                }
-            }
-            None => return CruiseControlPositionEnum::NotVisible,
-        }
     }
 
     fn calc_acceleration_percentage(&self, ahead: &Car) -> f32 {
@@ -128,15 +108,12 @@ impl CruiseControl for Car {
 
     fn new_acceleration_delta(&self) -> f32 {
         match self.radar_readings.get(0) {
-            Some(last_reading) => {
-                match last_reading.relative_speed {
-                    Some(relative_speed) => {
-                        (self.current_speed_ms + relative_speed).clamp(self.braking_mssq, self.acceleration_mssq)
-                    }
-                    None => 0.0
-                }
-            }
-            None => self.acceleration_mssq
+            Some(last_reading) => match last_reading.relative_speed {
+                Some(relative_speed) => (self.current_speed_ms + relative_speed)
+                    .clamp(self.braking_mssq, self.acceleration_mssq),
+                None => 0.0,
+            },
+            None => self.acceleration_mssq,
         }
     }
 
