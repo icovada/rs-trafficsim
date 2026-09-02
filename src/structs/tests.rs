@@ -216,11 +216,11 @@ fn test_new_acceleration_delta() {
     });
 
     let opt_some: Option<&Car> = Some(&mut car2);
-    assert_eq!(car1.new_acceleration_delta(opt_some), 2.5);
+    assert_eq!(car1.new_acceleration_delta(), 2.5);
 
     car2.position_m = 60.0;
     let opt_some: Option<&Car> = Some(&mut car2);
-    assert_eq!(car1.new_acceleration_delta(opt_some), -5.0);
+    assert_eq!(car1.new_acceleration_delta(), -5.0);
 }
 
 #[test]
@@ -247,8 +247,6 @@ fn test_car_tick() {
 
     let opt_car: Option<&Car> = Some(&car2);
     let out = car1.tick(opt_car);
-
-    dbg!(out.new_acceleration_delta(opt_car));
 
     dbg!(out.position_m, out.current_speed_ms);
 

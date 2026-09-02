@@ -30,7 +30,7 @@ pub trait CruiseControl {
 
     fn calc_acceleration_percentage(&self, ahead: &Car) -> f32;
     fn calc_braking_percentage(&self, ahead: &Car) -> f32;
-    fn new_acceleration_delta(&self, opt_ahead: Option<&Car>) -> f32;
+    fn new_acceleration_delta(&self) -> f32;
 
     fn read_radar(&mut self, opt_ahead: Option<&Car>);
     fn average_speed_front(&self) -> Vec<Option<f32>>;
@@ -61,10 +61,8 @@ impl Car {
 
 impl CruiseControl for Car {
     fn tick(&self, opt_ahead: Option<&Car>) -> Car {
-        let accel_delta: f32 = self.new_acceleration_delta(opt_ahead) * TICK_SECONDS;
-
         let mut out = self.clone();
-        out.current_speed_ms = (out.current_speed_ms + accel_delta).clamp(0.0, out.cruise_speed_ms);
+        out.read_radar(opt_ahead);
         out.update_position();
         out
     }
@@ -128,16 +126,17 @@ impl CruiseControl for Car {
             * -1.0
     }
 
-    fn new_acceleration_delta(&self, opt_ahead: Option<&Car>) -> f32 {
-        match self.is_car_ahead_visible(opt_ahead) {
-            CruiseControlPositionEnum::NotVisible => 100.0,
-            CruiseControlPositionEnum::VisibleOnTarget => 0.0,
-            CruiseControlPositionEnum::VisibleAheadTarget => {
-                self.calc_acceleration_percentage(opt_ahead.unwrap()) * self.acceleration_mssq
+    fn new_acceleration_delta(&self) -> f32 {
+        match self.radar_readings.get(0) {
+            Some(last_reading) => {
+                match last_reading.relative_speed {
+                    Some(relative_speed) => {
+                        (self.current_speed_ms + relative_speed).clamp(self.braking_mssq, self.acceleration_mssq)
+                    }
+                    None => 0.0
+                }
             }
-            CruiseControlPositionEnum::VisibleBehindTarget => {
-                self.calc_braking_percentage(opt_ahead.unwrap()) * self.braking_mssq
-            }
+            None => self.acceleration_mssq
         }
     }
 
