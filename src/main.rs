@@ -12,17 +12,17 @@ fn setup() -> Vec<Car> {
         min_gap_m: 10.0,
         time_headway_sec: 3.0,
         acceleration_mssq: 3.0,
-        braking_mssq: 5.0,
+        braking_mssq: -5.0,
     });
 
     let car2 = Car::new(CarConfig {
-        position_m: 50.0,
-        current_speed_ms: 12.0,
-        cruise_speed_ms: 12.0,
+        position_m: 30.0,
+        current_speed_ms: 20.0,
+        cruise_speed_ms: 20.0,
         min_gap_m: 10.0,
         time_headway_sec: 3.0,
         acceleration_mssq: 3.0,
-        braking_mssq: 5.0,
+        braking_mssq: -5.0,
     });
 
     let v = vec![car1, car2];

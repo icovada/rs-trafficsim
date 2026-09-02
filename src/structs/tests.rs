@@ -9,7 +9,7 @@ fn test_update_position() {
         min_gap_m: 3.0,
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
-        braking_mssq: 10.0,
+        braking_mssq: -10.0,
     });
 
     car1.update_position();
@@ -27,7 +27,7 @@ fn test_get_relative_target() {
         min_gap_m: 3.0,
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
-        braking_mssq: 10.0,
+        braking_mssq: -10.0,
     });
 
     assert_eq!(car1.get_relative_target(), 90.0);
@@ -42,7 +42,7 @@ fn test_car_tick() {
         min_gap_m: 30.0,
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
-        braking_mssq: 10.0,
+        braking_mssq: -10.0,
     });
 
     let car2 = Car::new(CarConfig {
@@ -52,7 +52,7 @@ fn test_car_tick() {
         min_gap_m: 3.0,
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
-        braking_mssq: 10.0,
+        braking_mssq: -10.0,
     });
 
     let opt_car: Option<&Car> = Some(&car2);
@@ -63,7 +63,6 @@ fn test_car_tick() {
 
 #[test]
 fn test_read_radar() {
-    //TODO: this test currently does nothing
     let mut car1 = Car::new(CarConfig {
         position_m: 0.0,
         current_speed_ms: 30.0,
@@ -71,7 +70,7 @@ fn test_read_radar() {
         min_gap_m: 30.0,
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
-        braking_mssq: 10.0,
+        braking_mssq: -10.0,
     });
 
     let mut car2 = Car::new(CarConfig {
@@ -81,7 +80,7 @@ fn test_read_radar() {
         min_gap_m: 3.0,
         time_headway_sec: 3.0,
         acceleration_mssq: 5.0,
-        braking_mssq: 10.0,
+        braking_mssq: -10.0,
     });
 
     // run 20 readings, check we only get 10 in array
@@ -95,8 +94,8 @@ fn test_read_radar() {
         *car1.radar_readings.get(0).unwrap(),
         RadarReading {
             distance_m: 41.0,
-            relative_speed: Some(-1.0),
-            distance_from_target_s: Some(-49.0)
+            relative_speed: Some(-10.0),
+            distance_from_target_s: Some(-4.90)
         }
     );
 
@@ -113,8 +112,8 @@ fn test_read_radar() {
         *car1.radar_readings.get(0).unwrap(),
         RadarReading {
             distance_m: 50.1,
-            relative_speed: Some(0.099998474),
-            distance_from_target_s: Some(399.0061)
+            relative_speed: Some(0.99998474),
+            distance_from_target_s: Some(39.90061)
         }
     );
 
@@ -142,8 +141,40 @@ fn test_read_radar() {
         *car1.radar_readings.get(0).unwrap(),
         RadarReading {
             distance_m: 90.0,
-            relative_speed: Some(-50.0),
+            relative_speed: Some(-500.0),
             distance_from_target_s: Some(0.0)
         }
     );
+}
+
+#[test]
+fn test_emergency_brake() {
+    let car1 = Car::new(CarConfig {
+        position_m: 0.0,
+        current_speed_ms: 30.0,
+        cruise_speed_ms: 30.0,
+        min_gap_m: 30.0,
+        time_headway_sec: 3.0,
+        acceleration_mssq: 5.0,
+        braking_mssq: -10.0,
+    });
+
+    let car2 = Car::new(CarConfig {
+        position_m: 5.0,
+        current_speed_ms: 20.0,
+        cruise_speed_ms: 20.0,
+        min_gap_m: 3.0,
+        time_headway_sec: 3.0,
+        acceleration_mssq: 5.0,
+        braking_mssq: -10.0,
+    });
+
+    let car1 = car1.tick(Some(&car2));
+    let car2 = car2.tick(None);
+
+    let car1 = car1.tick(Some(&car2));
+    let car2 = car2.tick(None);
+
+    assert!(car1.current_speed_ms < 30.0);
+
 }

@@ -49,13 +49,23 @@ impl CruiseControl for Car {
         let mut out = self.clone();
         out.read_radar(opt_ahead);
         out.update_position();
+        
+        match opt_ahead{
+            Some(ahead) => {
+                if out.position_m >= ahead.position_m {
+                    panic!("CRASH!");
+                }
+            }
+            None => {}
+        }
+
         out
     }
 
     fn update_position(&mut self) {
         let speed_delta = self.new_acceleration_delta();
         self.current_speed_ms =
-            (self.current_speed_ms + speed_delta).clamp(0.0, self.cruise_speed_ms);
+            (self.current_speed_ms + speed_delta * TICK_SECONDS).clamp(0.0, self.cruise_speed_ms);
         let tick_movement = self.current_speed_ms * TICK_SECONDS;
 
         self.position_m += tick_movement.clamp(0.0, self.cruise_speed_ms * TICK_SECONDS);
@@ -73,7 +83,7 @@ impl CruiseControl for Car {
                     if last_reading.distance_m < self.min_gap_m {
                         out = self.braking_mssq;
                     } else {
-                        out = relative_speed.clamp(self.braking_mssq * -1.0, self.acceleration_mssq);
+                        out = relative_speed.clamp(self.braking_mssq, self.acceleration_mssq);
                     }
                     out
                 }
@@ -105,7 +115,7 @@ impl CruiseControl for Car {
         // We have position in front, read previous position and figure out approx speed
         match (radar_distance_m, self.radar_readings.get(0).copied()) {
             (Some(distance_m), Some(last_reading)) => {
-                let relative_speed = distance_m - last_reading.distance_m;
+                let relative_speed = (distance_m - last_reading.distance_m) / TICK_SECONDS;
                 let distance_from_target = distance_m - self.get_relative_target();
                 let distance_from_target_s = distance_from_target / relative_speed * -1.0;
 
