@@ -33,7 +33,7 @@ fn setup() -> Vec<Car> {
 fn main() {
     let mut v = setup();
 
-    let mut maxtick = 100;
+    let mut maxtick = 20;
     while maxtick > 0 {
         maxtick -= 1;
 
@@ -46,10 +46,10 @@ fn main() {
 
         println!(
             "{}: {}: {}, {}",
-            z[0].position_m(),
-            z[1].position_m(),
-            z[0].current_speed_ms(),
-            z[1].current_speed_ms()
+            z[0].position_m,
+            z[1].position_m,
+            z[0].current_speed_ms,
+            z[1].current_speed_ms
         );
 
         v = z;

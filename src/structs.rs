@@ -9,8 +9,8 @@ pub use service_structs::{CarConfig, RadarReading};
 
 #[derive(Clone)]
 pub struct Car {
-    position_m: f32,
-    current_speed_ms: f32, //meters/second
+    pub position_m: f32,
+    pub current_speed_ms: f32, //meters/second
     cruise_speed_ms: f32,  //meters/second
     min_gap_m: f32,
     time_headway_sec: f32,
@@ -34,14 +34,6 @@ pub trait CruiseControl {
 }
 
 impl Car {
-    pub fn position_m(&self) -> f32 {
-        self.position_m
-    }
-
-    pub fn current_speed_ms(&self) -> f32 {
-        self.current_speed_ms
-    }
-
     pub fn new(config: CarConfig) -> Self {
         Car {
             position_m: config.position_m,
@@ -109,7 +101,7 @@ impl CruiseControl for Car {
         match self.radar_readings.get(0) {
             Some(last_reading) => match last_reading.relative_speed {
                 Some(relative_speed) => (self.current_speed_ms + relative_speed)
-                    .clamp(self.braking_mssq, self.acceleration_mssq),
+                    .clamp(self.braking_mssq*-1.0, self.acceleration_mssq),
                 None => 0.0,
             },
             None => self.acceleration_mssq,
