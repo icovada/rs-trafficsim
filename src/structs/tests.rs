@@ -278,6 +278,7 @@ fn test_read_radar() {
         braking_mssq: 10.0,
     });
 
+    // run 20 readings, check we only get 10 in array
     for _ in 0..20 {
         car1.read_radar(Some(&car2));
         car1.position_m = car1.position_m + 1.0;
@@ -293,6 +294,7 @@ fn test_read_radar() {
         })
     );
 
+    // Reset car position, read twice
     car1.position_m = 0.0;
     car2.position_m = 50.0;
     car1.read_radar(Some(&car2));
@@ -310,10 +312,12 @@ fn test_read_radar() {
         })
     );
 
+    // Move car2 way off. Expect None as reading
     car2.position_m = 350.0;
     car1.read_radar(Some(&car2));
     assert_eq!(*car1.radar_readings.get(0).unwrap(), None);
 
+    // Move car2 closer. Expect Some reading with None relative speed (need 2 measurements)
     car2.position_m = 150.0;
     car1.read_radar(Some(&car2));
     assert_eq!(
@@ -325,6 +329,7 @@ fn test_read_radar() {
         })
     );
 
+    // Move car2 close. Expect full reading.
     car2.position_m = 100.0;
     car1.read_radar(Some(&car2));
     assert_eq!(
