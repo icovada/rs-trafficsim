@@ -11,7 +11,7 @@ pub use service_structs::{CarConfig, RadarReading};
 pub struct Car {
     pub position_m: f32,
     pub current_speed_ms: f32, //meters/second
-    cruise_speed_ms: f32,  //meters/second
+    cruise_speed_ms: f32,      //meters/second
     min_gap_m: f32,
     time_headway_sec: f32,
     acceleration_mssq: f32, // meters/second^2
@@ -26,8 +26,6 @@ pub trait CruiseControl {
     fn get_relative_target(&self) -> f32;
     fn get_absolute_target(&self) -> f32;
 
-    fn calc_acceleration_percentage(&self, ahead: &Car) -> f32;
-    fn calc_braking_percentage(&self, ahead: &Car) -> f32;
     fn new_acceleration_delta(&self) -> f32;
 
     fn read_radar(&mut self, opt_ahead: Option<&Car>);
@@ -58,7 +56,11 @@ impl CruiseControl for Car {
 
     fn update_position(&mut self) {
         let speed_delta = self.new_acceleration_delta();
-        self.position_m += self.current_speed_ms + speed_delta * TICK_SECONDS;
+        self.current_speed_ms =
+            (self.current_speed_ms + speed_delta).clamp(0.0, self.cruise_speed_ms);
+        let tick_movement = self.current_speed_ms * TICK_SECONDS;
+
+        self.position_m += tick_movement.clamp(0.0, self.cruise_speed_ms * TICK_SECONDS);
     }
 
     fn get_relative_target(&self) -> f32 {
@@ -69,39 +71,14 @@ impl CruiseControl for Car {
         return self.get_relative_target() + self.position_m;
     }
 
-    fn calc_acceleration_percentage(&self, ahead: &Car) -> f32 {
-        let start = self.get_absolute_target();
-        let end = self.position_m + 200.0;
-        let length = end - start;
-
-        (ahead.position_m - start) / length
-    }
-
-    fn calc_braking_percentage(&self, ahead: &Car) -> f32 {
-        /*
-
-        |----|-----x----|--------|
-        |    |     |    |        ^-- end of radar
-        |    |     |    ^----------- target point
-        |    |     ^---------------- car ahead
-        |    ^---------------------- self.min_gap
-        ^--------------------------- 0.0
-
-        I need to find how far ahead x is between self.min_gap and target point.
-        Subtract self.min_gap from everything
-
-        */
-
-        (ahead.position_m - self.position_m - self.min_gap_m)
-            / (self.get_relative_target() - self.min_gap_m)
-            * -1.0
-    }
-
     fn new_acceleration_delta(&self) -> f32 {
         match self.radar_readings.get(0) {
             Some(last_reading) => match last_reading.relative_speed {
-                Some(relative_speed) => (self.current_speed_ms + relative_speed)
-                    .clamp(self.braking_mssq*-1.0, self.acceleration_mssq),
+                Some(relative_speed) => {
+                    let out =
+                        relative_speed.clamp(self.braking_mssq * -1.0, self.acceleration_mssq);
+                    out
+                }
                 None => 0.0,
             },
             None => self.acceleration_mssq,
@@ -130,17 +107,9 @@ impl CruiseControl for Car {
         // We have position in front, read previous position and figure out approx speed
         match (radar_distance_m, self.radar_readings.get(0).copied()) {
             (Some(distance_m), Some(last_reading)) => {
-                let relative_speed = (distance_m - last_reading.distance_m) / TICK_SECONDS;
+                let relative_speed = (distance_m - last_reading.distance_m);
                 let distance_from_target = distance_m - self.get_relative_target();
-                let distance_from_target_s =
-                    distance_from_target / relative_speed / TICK_SECONDS * -1.0;
-
-                dbg!(
-                    relative_speed,
-                    distance_from_target,
-                    distance_from_target_s,
-                    self.get_relative_target()
-                );
+                let distance_from_target_s = distance_from_target / relative_speed * -1.0;
 
                 self.radar_readings.push_front(RadarReading {
                     distance_m,

@@ -16,7 +16,7 @@ fn setup() -> Vec<Car> {
     });
 
     let car2 = Car::new(CarConfig {
-        position_m: 150.0,
+        position_m: 50.0,
         current_speed_ms: 12.0,
         cruise_speed_ms: 12.0,
         min_gap_m: 10.0,
@@ -33,7 +33,7 @@ fn setup() -> Vec<Car> {
 fn main() {
     let mut v = setup();
 
-    let mut maxtick = 20;
+    let mut maxtick = 100;
     while maxtick > 0 {
         maxtick -= 1;
 
@@ -46,10 +46,7 @@ fn main() {
 
         println!(
             "{}: {}: {}, {}",
-            z[0].position_m,
-            z[1].position_m,
-            z[0].current_speed_ms,
-            z[1].current_speed_ms
+            z[0].position_m, z[1].position_m, z[0].current_speed_ms, z[1].current_speed_ms
         );
 
         v = z;
